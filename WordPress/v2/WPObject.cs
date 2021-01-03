@@ -81,6 +81,14 @@ namespace WooCommerce.NET.WordPress.v2
 
                 return API.DeserializeJSon<T8>(await API.PostRestful(APIEndpoint, "fileupload", ps).ConfigureAwait(false));
             }
+
+            public async Task<T8> Add(byte[] data, string filename, string contentType)
+            {
+                Dictionary<string, string> ps = new Dictionary<string, string>();
+                ps.Add("filename", filename);
+                ps.Add("content-type", contentType);
+                return this.API.DeserializeJSon<T8>(await this.API.PostRestful(this.APIEndpoint, "fileupload", ps, data).ConfigureAwait(false));
+            }
         }
 
         public class WPSettingItem : WCItem<T12>

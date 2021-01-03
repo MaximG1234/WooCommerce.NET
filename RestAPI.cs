@@ -144,7 +144,7 @@ namespace WooCommerceNET
         /// <param name="requestBody">If your call doesn't have a body, please pass string.Empty, not null.</param>
         /// <param name="parms"></param>
         /// <returns>json string</returns>
-        public virtual async Task<string> SendHttpClientRequest<T>(string endpoint, RequestMethod method, T requestBody, Dictionary<string, string> parms = null)
+        public virtual async Task<string> SendHttpClientRequest<T>(string endpoint, RequestMethod method, T requestBody, Dictionary<string, string> parms = null, byte[] data = null)
         {
             HttpWebRequest httpWebRequest = null;
             try
@@ -229,19 +229,14 @@ namespace WooCommerceNET
                     {
                         if (requestBody.ToString() == "fileupload")
                         {
-                            httpWebRequest.Headers["Content-Disposition"] = $"form-data; filename=\"{parms["name"]}\"";
-                            httpWebRequest.ContentType = "application/x-www-form-urlencoded";
-
+                            httpWebRequest.Headers["Content-Disposition"] = $"form-data; filename=\"{parms["filename"]}\"";
+                            httpWebRequest.ContentType = parms.ContainsKey("content-type") ? parms["content-type"] : httpWebRequest.ContentType;
                             Stream dataStream = await httpWebRequest.GetRequestStreamAsync().ConfigureAwait(false);
-                            FileStream fileStream = new FileStream(parms["path"], FileMode.Open, FileAccess.Read);
-                            byte[] buffer = new byte[4096];
-                            int bytesRead = 0;
 
-                            while ((bytesRead = fileStream.Read(buffer, 0, buffer.Length)) != 0)
-                            {
-                                dataStream.Write(buffer, 0, bytesRead);
-                            }
-                            fileStream.Close();
+                            if (data == null || data.GetLength(0) == 0)
+                                throw new InvalidOperationException("data must be provided.");
+
+                            dataStream.Write(data, 0, data.GetLength(0));
                         }
                         else
                         {
@@ -282,9 +277,9 @@ namespace WooCommerceNET
             return await SendHttpClientRequest(endpoint, RequestMethod.GET, string.Empty, parms).ConfigureAwait(false);
         }
 
-        public async Task<string> PostRestful(string endpoint, object jsonObject, Dictionary<string, string> parms = null)
+        public async Task<string> PostRestful(string endpoint, object jsonObject, Dictionary<string, string> parms = null, byte[] data = null)
         {
-            return await SendHttpClientRequest(endpoint, RequestMethod.POST, jsonObject, parms).ConfigureAwait(false);
+            return await SendHttpClientRequest(endpoint, RequestMethod.POST, jsonObject, parms, data).ConfigureAwait(false);
         }
 
         public async Task<string> PutRestful(string endpoint, object jsonObject, Dictionary<string, string> parms = null)
